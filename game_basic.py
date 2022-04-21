@@ -1,5 +1,6 @@
 from cmu_112_graphics import *
 import math
+from Map import *
 
 def almostEqual(d1, d2, epsilon=10**-7):
     # note: use math.isclose() outside 15-112 with Python version 3.5 or later
@@ -13,35 +14,82 @@ def roundHalfUp(d):
     # https://docs.python.org/3/library/decimal.html#rounding-modes
     return int(decimal.Decimal(d).to_integral_value(rounding=rounding))
 
-from cmu_112_graphics import *
-
 'STARTER INFORMATION'
 def appStarted(app):
     rows, cols, cellSize, margin = gameDimensions()
+    app.board = gameMap()
     app.rows = rows
     app.cols = cols
     app.cellSize = cellSize
     app.margin = margin
     app.pacColor = 'yellow'
-    app.pacRow = 20
-    app.pacCol = 15
-    app.dotColor = 'blue'
+    app.pacRow = 23
+    app.pacCol = 14
+    app.dotColor = 'orange'
     app.dotLocations = []
     createDots(app)
     app.score = 0
+    app.wallColor = 'blue'
+    app.pathColor = 'grey'
+    app.blankColor = 'black'
+    app.entranceColor = 'red'
 
 
 def gameDimensions():
-    rows = 30
-    cols = 30
+    rows = 31
+    cols = 28
     cellSize = 20
     margin = 50
     return rows, cols, cellSize, margin
+
+def gameMap():
+    #(13,0) (13,27) should transfer
+    board = ([
+     ['w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w'],
+     ['w','p','p','p','p','p','p','p','p','p','p','p','p','w','w','p','p','p','p','p','p','p','p','p','p','p','p','w'],
+     ['w','p','w','w','w','w','p','w','w','w','w','w','p','w','w','p','w','w','w','w','w','p','w','w','w','w','p','w'],
+     ['w','p','w','w','w','w','p','w','w','w','w','w','p','w','w','p','w','w','w','w','w','p','w','w','w','w','p','w'],
+     ['w','p','w','w','w','w','p','w','w','w','w','w','p','w','w','p','w','w','w','w','w','p','w','w','w','w','p','w'],
+     ['w','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','w'],
+     ['w','p','w','w','w','w','p','w','w','p','w','w','w','w','w','w','w','w','p','w','w','p','w','w','w','w','p','w'],
+     ['w','p','w','w','w','w','p','w','w','p','w','w','w','w','w','w','w','w','p','w','w','p','w','w','w','w','p','w'],
+     ['w','p','p','p','p','p','p','w','w','p','p','p','p','w','w','p','p','p','p','w','w','p','p','p','p','p','p','w'],
+     ['w','w','w','w','w','w','p','w','w','w','w','w','p','w','w','p','w','w','w','w','w','p','w','w','w','w','w','w'],
+     ['n','n','n','n','n','w','p','w','w','w','w','w','p','w','w','p','w','w','w','w','w','p','w','n','n','n','n','n'],
+     ['n','n','n','n','n','w','p','w','w','p','p','p','p','p','p','p','p','p','p','w','w','p','w','n','n','n','n','n'],
+     ['n','n','n','n','n','w','p','w','w','p','w','w','w','e','e','w','w','w','p','w','w','p','w','n','n','n','n','n'],
+     ['w','w','w','w','w','w','p','w','w','p','w','s','s','s','s','s','s','w','p','w','w','p','w','w','w','w','w','w'],
+     ['p','p','p','p','p','p','p','p','p','p','w','s','s','s','s','s','s','w','p','p','p','p','p','p','p','p','p','p'],
+     ['w','w','w','w','w','w','p','w','w','p','w','s','s','s','s','s','s','w','p','w','w','p','w','w','w','w','w','w'],
+     ['n','n','n','n','n','w','p','w','w','p','w','w','w','w','w','w','w','w','p','w','w','p','w','n','n','n','n','n'],
+     ['n','n','n','n','n','w','p','w','w','p','p','p','p','p','p','p','p','p','p','w','w','p','w','n','n','n','n','n'],
+     ['n','n','n','n','n','w','p','w','w','p','w','w','w','w','w','w','w','w','w','w','w','p','w','n','n','n','n','n'],
+     ['w','w','w','w','w','w','p','w','w','p','w','w','w','w','w','w','w','w','w','w','w','p','w','w','w','w','w','w'],
+     ['w','p','p','p','p','p','p','p','p','p','p','p','p','w','w','p','p','p','p','p','p','p','p','p','p','p','p','w'],
+     ['w','p','w','w','w','w','p','w','w','w','w','w','p','w','w','p','w','w','w','w','w','p','w','w','w','w','p','w'],
+     ['w','p','w','w','w','w','p','w','w','w','w','w','p','w','w','p','w','w','w','w','w','p','w','w','w','w','p','w'],
+     ['w','p','p','p','w','w','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','p','w','w','p','p','p','w'],
+     ['w','w','w','p','w','w','p','w','w','p','w','w','w','w','w','w','w','w','p','w','w','p','w','w','p','w','w','w'],
+     ['w','w','w','p','w','w','p','w','w','p','w','w','w','w','w','w','w','w','p','w','w','p','w','w','p','w','w','w'],
+     ['w','p','p','p','p','p','p','w','w','p','p','p','p','w','w','p','p','p','p','w','w','p','p','p','p','p','p','w'],
+     ['w','p','w','w','w','w','w','w','w','w','w','w','p','w','w','p','w','w','w','w','w','w','w','w','w','w','p','w'],
+     ['w','p','w','w','w','w','w','w','w','w','w','w','p','w','w','p','w','w','w','w','w','w','w','w','w','w','p','w'],
+     ['w','p','p','p','p','p','p','p','p','p','p','p','p','w','w','p','p','p','p','p','p','p','p','p','p','p','p','w'],
+     ['w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w','w']
+     ])
+    return board
+
 
 'PACMAN MOVE'
 def pacManMove(app, drow, dcol):
     app.pacRow += drow
     app.pacCol += dcol
+    if (app.pacRow, app.pacCol) == (13,0):
+        app.pacRow = 13
+        app.pacCol = 27
+    elif (app.pacRow, app.pacCol) == (13,27):
+        app.pacRow = 13
+        app.pacCol = 0
     if pacMoveLegal(app) != True:
         app.pacRow -= drow
         app.pacCol -= dcol
@@ -49,7 +97,8 @@ def pacManMove(app, drow, dcol):
 
 def pacMoveLegal(app):
     if (app.pacRow < 0 or app.pacCol < 0 or app.pacRow >= app.rows or
-    app.pacCol >= app.cols):
+    app.pacCol >= app.cols or app.board[app.pacRow][app.pacCol] == 'w'
+    or app.board[app.pacRow][app.pacCol] == 'e'):
         return False
     return True
 
@@ -58,8 +107,8 @@ def pacMoveLegal(app):
 def createDots(app):
     for row in range(app.rows):
         for col in range(app.cols):
-            coordinate = (row, col)
-            if coordinate != (20,15):
+            if app.board[row][col] == 'p':
+                coordinate = (row, col)
                 app.dotLocations.append(coordinate)
  
 def checkDotPacCollision(app):
@@ -80,8 +129,6 @@ def getCellBounds(app, row, col):
     y1 = app.margin + (row+1) * gridHeight / app.rows
     return (x0, y0, x1, y1)
 
-def ghostStart(app, row ,col):
-    return 42
 
 'USER INTERFACE'
 def keyPressed(app, event):
@@ -111,7 +158,16 @@ def drawGrid(app, canvas):
     for row in range(app.rows):
         for col in range(app.cols):
             x0, y0, x1, y1 = getCellBounds(app, row, col)
-            canvas.create_rectangle(x0, y0, x1, y1, fill = 'red')
+            if app.board[row][col] == 'w':
+                canvas.create_rectangle(x0, y0, x1, y1, fill = app.wallColor)
+            elif app.board[row][col] == 'p':
+                canvas.create_rectangle(x0, y0, x1, y1, fill = app.pathColor)
+            elif app.board[row][col] == 'n':
+                canvas.create_rectangle(x0, y0, x1, y1, fill = app.blankColor)
+            elif app.board[row][col] == 's':
+                canvas.create_rectangle(x0, y0, x1, y1, fill = app.pathColor)
+            elif app.board[row][col] == 'e':
+                canvas.create_rectangle(x0, y0, x1, y1, fill = app.entranceColor)
 
 def drawPacMan(app, canvas):
     x0, y0, x1, y1 = getCellBounds(app, app.pacRow, app.pacCol)
@@ -120,7 +176,7 @@ def drawPacMan(app, canvas):
 def drawDot(app, canvas):
     for (row, col) in app.dotLocations:
         x0, y0, x1, y1 = getCellBounds(app, row, col)
-        canvas.create_oval(x0+5, y0+5, x1-5, y1-5, fill = app.dotColor)
+        canvas.create_oval(x0+6.5, y0+6.5, x1-6.5, y1-6.5, fill = app.dotColor)
 
 def drawScore(app, canvas):
     x = app.width//2
