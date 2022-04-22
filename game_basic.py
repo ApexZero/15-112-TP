@@ -1,6 +1,6 @@
 from cmu_112_graphics import *
 import math
-from Map import *
+from ghost_astar import *
 
 def almostEqual(d1, d2, epsilon=10**-7):
     # note: use math.isclose() outside 15-112 with Python version 3.5 or later
@@ -16,12 +16,11 @@ def roundHalfUp(d):
 
 'STARTER INFORMATION'
 def appStarted(app):
-    rows, cols, cellSize, margin = gameDimensions()
+    rows, cols, cellSize = gameDimensions()
     app.board = gameMap()
     app.rows = rows
     app.cols = cols
     app.cellSize = cellSize
-    app.margin = margin
     app.pacColor = 'yellow'
     app.pacRow = 23
     app.pacCol = 14
@@ -33,14 +32,17 @@ def appStarted(app):
     app.pathColor = 'grey'
     app.blankColor = 'black'
     app.entranceColor = 'red'
+    app.ghost1Row = 14
+    app.ghost1Col = 12
+    app.ghost1Color = 'pink'
 
 
 def gameDimensions():
     rows = 31
     cols = 28
     cellSize = 20
-    margin = 50
-    return rows, cols, cellSize, margin
+    return rows, cols, cellSize
+
 
 def gameMap():
     #(13,0) (13,27) should transfer
@@ -121,12 +123,12 @@ def checkDotPacCollision(app):
 'CREATING CELL AND BOARD'
 def getCellBounds(app, row, col):
     #taken from 15-112 Website
-    gridWidth  = app.width - 2*app.margin
-    gridHeight = app.height - 2*app.margin
-    x0 = app.margin + col * gridWidth / app.cols
-    x1 = app.margin + (col+1) * gridWidth / app.cols
-    y0 = app.margin + row * gridHeight / app.rows
-    y1 = app.margin + (row+1) * gridHeight / app.rows
+    gridWidth  = app.width
+    gridHeight = app.height
+    x0 = col * gridWidth / app.cols
+    x1 = (col+1) * gridWidth / app.cols
+    y0 = row * gridHeight / app.rows
+    y1 = (row+1) * gridHeight / app.rows
     return (x0, y0, x1, y1)
 
 
@@ -149,6 +151,23 @@ def keyPressed(app, event):
     pacManMove(app, drow, dcol)
     checkDotPacCollision(app)
 
+'Ghost Movement'
+def ghostMove(app):
+    start = app.board[app.ghost1Row][app.ghost1Col]
+    goal = app.board[app.pacRow][app.pacCol]
+    AStar(app.board, start, goal)
+
+def ghostLegal(app):
+    if (app.ghost1Row < 0 or app.ghost1Col < 0 or app.ghost1Row >= app.rows
+    or app.ghost1Col >= app.cols or app.board[app.ghost1Row][app.ghost1Col] == 'w'):
+        return False
+    return True
+
+def timerFired(app):
+    ghostMove(app)
+    if ghostLegal(app) != True:
+        return 42
+        
 'Point System'
 def calculateScore(app):
     app.score += 10
@@ -192,9 +211,9 @@ def redrawAll(app, canvas):
     drawScore(app, canvas)
 
 def playPacMan():
-    rows, cols, cellSize, margin = gameDimensions()
-    width = (cols*cellSize)+(margin*2)
-    height = (rows*cellSize) + (margin*2)
+    rows, cols, cellSize = gameDimensions()
+    width = (cols*cellSize)
+    height = (rows*cellSize)
     runApp(width=width, height=height)
 
 playPacMan()
