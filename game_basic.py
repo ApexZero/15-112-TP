@@ -17,6 +17,7 @@ def roundHalfUp(d):
 
 'STARTER INFORMATION'
 def appStarted(app):
+    app.startGame = False
     rows, cols, cellSize, margin = gameDimensions()
     app.board = gameMap()
     app.rows = rows
@@ -28,10 +29,7 @@ def appStarted(app):
     app.pacCol = 10
     app.dotColor = 'orange'
     app.dotLocations = []
-    app.spawnLocation = ([(12,13), (12,14), (13,11), (13,12), (13,13), (13,14),
-                          (13,15), (13,16), (14,11), (14,12), (14,13), (14,14),
-                          (14,15), (14,16), (15,11), (15,12), (15,13), (15,14),
-                          (15,15), (15,16)])
+    app.spawnLocation = spawnLocations()
     app.powerUpLocations = [(3,1), (3,26), (23,1), (23, 26)]
     createDots(app)
     app.score = 0
@@ -44,16 +42,19 @@ def appStarted(app):
     app.ghost1Col = 12
     app.ghost1Color = 'pink'
     app.isGameOver = False
-    app.timerDelay = 200
+    app.gameBeaten = False
+    app.timerDelay = 250
     app.powerUpGhostColor = 'purple'
     app.timePassed = 0
     app.pacTime = 0
     app.temp = None
     app.ghostColor = False
-    if app.isGameOver == True:
+    if app.isGameOver == True or app.gameBeaten == True:
         resetGame(app)
 
 def resetGame(app):
+    app.board = gameMap()
+    app.dotLocations = []
     createDots(app)
     app.score = 0
     app.pacRow = 5
@@ -61,14 +62,21 @@ def resetGame(app):
     app.ghost1Row = 14
     app.ghost1Col = 12
     app.isGameOver = False
+    app.gameBeaten = False
 
 def gameDimensions():
     rows = 31
     cols = 28
     cellSize = 20
-    margin = 50
+    margin = 100
     return rows, cols, cellSize, margin
 
+def spawnLocations():
+    location = ([(12,13), (12,14), (13,11), (13,12), (13,13), (13,14),
+                          (13,15), (13,16), (14,11), (14,12), (14,13), (14,14),
+                          (14,15), (14,16), (15,11), (15,12), (15,13), (15,14),
+                          (15,15), (15,16)])
+    return location
 
 def gameMap():
     #(13,0) (13,27) should transfer
@@ -149,7 +157,7 @@ def checkGhostColor(app):
 def createDots(app):
     for row in range(app.rows):
         for col in range(app.cols):
-            if app.board[row][col] == 'p':
+            if app.board[row][col] == 'p' and (row, col) != (5,10):
                 if (row, col) not in app.spawnLocation and (row, col) not in app.powerUpLocations:
                     coordinate = (row, col)
                     app.dotLocations.append(coordinate)
@@ -174,26 +182,34 @@ def getCellBounds(app, row, col):
 
 
 'USER INTERFACE'
+def startGame(app):
+    return 42
+
 def keyPressed(app, event):
     drow = 0
     dcol = 0
-    #use time.time, store time, set margin to 200 mil
-    if event.key == 'Up': #add timer to slow down:
-        drow = -1
-        dcol = 0
-    elif event.key == 'Down':
-        drow = 1
-        dcol = 0
-    elif event.key == 'Left':
-        drow = 0
-        dcol = -1
-    elif event.key == 'Right':
-        drow = 0
-        dcol = 1
-    elif event.key == 'r':
-        resetGame(app)
-    pacManMove(app, drow, dcol)
-    checkDotPacCollision(app)
+    if event.key == 'Space':
+        app.startGame = True
+    if app.startGame == True:
+        if event.key == 'Up':
+            drow = -1
+            dcol = 0
+        elif event.key == 'Down':
+            drow = 1
+            dcol = 0
+        elif event.key == 'Left':
+            drow = 0
+            dcol = -1
+        elif event.key == 'Right':
+            drow = 0
+            dcol = 1
+        elif event.key == 'r':
+            resetGame(app)
+        elif event.key == 'f':
+            app.dotLocations.clear()
+        pacManMove(app, drow, dcol)
+        checkDotPacCollision(app)
+
 
 'Ghost Movement'
 
@@ -215,34 +231,37 @@ def ghostCollision(app):
     return True
 
 def timerFired(app):
-    if app.isGameOver == False:
-        if ghostLegal(app) != False:
-            if powerUp(app) == True or app.temp != None:
-                checkGhostColor(app)
-                app.timePassed += app.timerDelay
-                app.pacTime += app.timerDelay
-                if app.timePassed < 1000:
-                    app.ghost1Row = app.ghost1Row
-                    app.ghost1Col = app.ghost1Col
-                else:
-                    app.timePassed = 0
-                    app.pacTime = 0
-                    app.temp = None
-                    app.ghostColor = False
-            elif powerUp(app) == False:
-                path = ghostMove(app)
-                #print(path)
-                if path != None:
-                    if ghostCollision(app) != True:
-                        app.isGameOver = True
+    if app.startGame == True:
+        beatingGame(app)
+        if app.isGameOver == False and app.gameBeaten == False:
+            if ghostLegal(app) != False:
+                if powerUp(app) == True or app.temp != None:
+                    checkGhostColor(app)
+                    app.timePassed += app.timerDelay
+                    app.pacTime += app.timerDelay
+                    if app.timePassed < 2000:
+                        app.ghost1Row = app.ghost1Row
+                        app.ghost1Col = app.ghost1Col
                     else:
-                        if len(path) == 1:
+                        app.timePassed = 0
+                        app.pacTime = 0
+                        app.temp = None
+                        app.ghostColor = False
+                elif powerUp(app) == False:
+                    path = ghostMove(app)
+                    #print(path)
+                    if path != None:
+                        if ghostCollision(app) != True:
                             app.isGameOver = True
                         else:
-                            nextMove = path[1]
-                            app.ghost1Row = nextMove[0]
-                            app.ghost1Col = nextMove[1]
-        
+                            if len(path) == 1:
+                                app.isGameOver = True
+                            else:
+                                nextMove = path[1]
+                                app.ghost1Row = nextMove[0]
+                                app.ghost1Col = nextMove[1]
+
+
 'Point System'
 def calculateScore(app):
     if app.temp != None:
@@ -250,6 +269,10 @@ def calculateScore(app):
     else:
         app.score += 10
 
+'GAME OVER'
+def beatingGame(app):
+    if len(app.dotLocations) == 0:
+        app.gameBeaten = True
 
 'DRAW FUNCTIONS'
 def drawGrid(app, canvas):
@@ -293,24 +316,104 @@ def drawScore(app, canvas):
     x = app.width//2
     y = app.height//30
     canvas.create_text(x, y, text = f'Score = {app.score}', fill = 'White',
-                        font = 'Times 18 bold')
+                        font = 'Times 20 bold')
+
+def drawStartGame(app, canvas):
+    if app.startGame == False:
+        x = app.width//2
+        y = app.height//2
+        canvas.create_text(x, y, text ='Press SPACE to Start Game', fill = 'White',
+                    font = 'Times 40 bold italic')
+
 
 def drawGameOver(app, canvas):
     if app.isGameOver == True:
         x = app.width//2
         y = app.height//2
         canvas.create_text(x, y, text ='GAME OVER!', fill = 'White',
+                    font = 'Times 40 bold italic')
+
+def drawBeatenGame(app, canvas):
+    if app.gameBeaten == True:
+        x= app.width//2
+        y = app.height//2
+        canvas.create_text(x, y, text ='CONGRATS, YOU BEAT THE GAME!', fill = 'White',
                     font = 'Times 28 bold italic')
 
-def redrawAll(app, canvas):
-    canvas.create_rectangle(0,0, app.width, app.height, fill = 'orange')
+def drawUpInstructions(app, canvas):
+    x = app.width//2
+    y = app.height//1.6
+    canvas.create_text(x, y, text='Press UP Arrow Key to move up', fill = 'White',
+                    font = 'Times 20  bold italic')
+
+def drawDownInstructions(app, canvas):
+    x = app.width//2
+    y = app.height//1.49
+    canvas.create_text(x, y, text='Press DOWN Arrow Key to move down', fill = 'White',
+                    font = 'Times 20  bold italic')
+
+def drawLeftInstructions(app, canvas):
+    x = app.width//2
+    y = app.height//1.38
+    canvas.create_text(x, y, text='Press LEFT Arrow Key to move left', fill = 'White',
+                    font = 'Times 20  bold italic')
+
+def drawRightInstructions(app, canvas):
+    x = app.width//2
+    y = app.height//1.29
+    canvas.create_text(x, y, text='Press RIGHT Arrow Key to move right', fill = 'White',
+                    font = 'Times 20  bold italic')
+
+def drawRestartInstructions(app, canvas):
+    x = app.width//2
+    y = app.height//1.22
+    canvas.create_text(x, y, text='Press R Key to restart game', fill = 'White',
+                    font = 'Times 20  bold italic')
+
+def drawEndInstructions(app, canvas):
+    x = app.width//2
+    y = app.height//1.15
+    canvas.create_text(x, y, text='Press F Key to end game', fill = 'White',
+                    font = 'Times 20  bold italic')
+
+def caution1(app, canvas):
+    x = app.width//2
+    y = app.height//16
+    canvas.create_text(x, y, text='Warning 1, please wait for the ghost to start moving before moving pacman',
+    fill = 'White', font = 'Time 12 bold italic')
+
+def caution2(app, canvas):
+    x = app.width//2
+    y = app.height//10
+    canvas.create_text(x, y, text='Warning 2, please do not spam the user inputs to prevent the game from freezing',
+    fill = 'White', font = 'Time 12 bold italic')
+
+def gameStart(app, canvas):
     drawGrid(app, canvas)
     drawPacMan(app, canvas)
     drawDot(app, canvas)
     drawPowerUp(app, canvas)
     drawScore(app, canvas)
     drawGameOver(app, canvas)
+    drawBeatenGame(app, canvas)
     drawGhost1(app, canvas)
+    caution1(app, canvas)
+    caution2(app, canvas)
+
+def moveInstructions(app, canvas):
+    drawUpInstructions(app, canvas)
+    drawDownInstructions(app, canvas)
+    drawLeftInstructions(app, canvas)
+    drawRightInstructions(app, canvas)
+    drawRestartInstructions(app, canvas)
+    drawEndInstructions(app, canvas)
+
+def redrawAll(app, canvas):
+    canvas.create_rectangle(0,0, app.width, app.height, fill = 'dark blue')
+    drawStartGame(app, canvas)
+    moveInstructions(app, canvas)
+    if app.startGame == True:
+       gameStart(app, canvas)
 
 def playPacMan():
     rows, cols, cellSize, margin = gameDimensions()
